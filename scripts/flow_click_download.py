@@ -99,32 +99,39 @@ async def open_new_project(page):
     before_count = await page.locator("a[href*='/project/']").count()
     log_hb('open_flow', f'project_count_before={before_count}')
 
-    # Click "New Project" button
+    # Click "New Project" button - EXPANDED SELECTORS
     created = await click_first([
-        page.get_by_role('button', name=re.compile(r'\+?\s*โปรเจ็กต์ใหม่|new project', re.I)),
+        page.get_by_role('button', name=re.compile(r'\+?\s*โปรเจ็กต์ใหม่|new project|เริ่มcreate|create with flow|create|new', re.I)),
         page.get_by_role('button', name=re.compile(r'create with flow|create', re.I)),
         page.get_by_text(re.compile(r'\+?\s*โปรเจ็กต์ใหม่|new project|create with flow|create', re.I)),
+        page.locator("button:has-text('โปรเจ็กต์ใหม่')"),
+        page.locator("button:has-text('new project')"),
+        page.locator("button:has-text('create')"),
+        page.get_by_role('link', name=re.compile(r'โปรเจ็กต์ใหม่|new project', re.I)),
+        page.locator("a:has-text('โปรเจ็กต์ใหม่')"),
+        page.locator("[role='button']:has-text('โปรเจ็กต์ใหม่')"),
     ])
     log_hb('open_flow', f'new_project_clicked={created}')
     
     if created:
         # Wait for page to refresh and new project to appear
-        await page.wait_for_timeout(4000)
+        await page.wait_for_timeout(6000)
         
         # Try multiple selectors to find project link
         link_clicked = False
         for selector in [
             "a[href*='/project/']",
             "a[href*='/tools/flow/project']",
+            "a[href*='/edit/']",
         ]:
             links = page.locator(selector)
             count = await links.count()
             if count > 0:
                 try:
-                    await links.first.click(timeout=8000)
+                    await links.first.click(timeout=10000)
                     log_hb('open_flow', f'clicked_project_link_selector={selector}')
                     link_clicked = True
-                    await page.wait_for_timeout(2000)
+                    await page.wait_for_timeout(3000)
                     break
                 except Exception as e:
                     log_hb('open_flow', f'click_selector_failed={selector} error={e}')
