@@ -1,0 +1,15 @@
+{
+  "public": true,
+  "description": "Flow Video Download Skill — Complete Guide (2026-03-02)",
+  "files": {
+    "FLOW_VIDEO_COMPLETE_GUIDE.md": {
+      "content": "See attached file in workspace"
+    },
+    "download_via_gcs_url.ps1": {
+      "content": "# Flow Video Download via GCS URL (Proven Method)\n# Usage: .\\download_via_gcs_url.ps1 -GcsUrl \"<url>\" -OutFile \"<path>\"\n\nparam(\n    [Parameter(Mandatory=$true)]\n    [string]$GcsUrl,\n    \n    [Parameter(Mandatory=$true)]\n    [string]$OutFile\n)\n\nWrite-Host \"Downloading from GCS...\"\nInvoke-WebRequest -Uri $GcsUrl -OutFile $OutFile -UseBasicParsing\n\n$size = (Get-Item $OutFile).Length\nWrite-Host \"DOWNLOADED: $size bytes ($([math]::Round($size/1MB,2)) MB)\"\n\n$header = Get-Content $OutFile -Encoding Byte -TotalCount 12\n$isMp4 = [System.Text.Encoding]::ASCII.GetString($header[4..7]) -eq 'ftyp'\nWrite-Host \"MP4_VALID: $isMp4\"\n\nif (-not $isMp4) {\n    throw \"File is not valid MP4!\"\n}\n\nWrite-Host \"SUCCESS: Video ready at $OutFile\"\n"
+    },
+    "inspect_mp4.py": {
+      "content": "#!/usr/bin/env python\n\"\"\"\nFlow Video Media Inspector\nUsage: python inspect_mp4.py <path-to-mp4>\n\"\"\"\n\nimport sys\nfrom pathlib import Path\n\ntry:\n    from mutagen import File\nexcept ImportError:\n    print(\"ERROR: mutagen not installed. Run: pip install mutagen\")\n    sys.exit(1)\n\ndef inspect_mp4(file_path: str):\n    file = File(file_path)\n    if file is None:\n        print(f\"ERROR: Cannot read {file_path}\")\n        return False\n    \n    print(f\"FILE={file_path}\")\n    print(f\"SIZE={Path(file_path).stat().st_size}\")\n    print(f\"TRACKS={len(file.mime)}\")\n    \n    has_video = False\n    has_audio = False\n    duration = 0.0\n    \n    if hasattr(file, 'info'):\n        if hasattr(file.info, 'length'):\n            duration = file.info.length\n        \n        if hasattr(file.info, 'bitrate'):\n            print(f\"BITRATE={file.info.bitrate}\")\n    \n    for mime in file.mime:\n        if 'video' in mime:\n            has_video = True\n        if 'audio' in mime:\n            has_audio = True\n    \n    print(f\"TRACK_1_TYPE={'vide' if has_video else 'unkn'}\")\n    print(f\"TRACK_1_DURATION_SEC={duration}\")\n    print(f\"TRACK_2_TYPE={'soun' if has_audio else 'unkn'}\")\n    print(f\"TRACK_2_DURATION_SEC={duration}\")\n    print(f\"HAS_VIDEO={has_video}\")\n    print(f\"HAS_AUDIO={has_audio}\")\n    \n    return has_video and has_audio\n\nif __name__ == \"__main__\":\n    if len(sys.argv) != 2:\n        print(\"Usage: python inspect_mp4.py <path-to-mp4>\")\n        sys.exit(1)\n    \n    result = inspect_mp4(sys.argv[1])\n    sys.exit(0 if result else 1)\n"
+    }
+  }
+}
